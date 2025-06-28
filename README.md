@@ -21,6 +21,139 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+# PDF Text Extractor API
+
+A NestJS service for extracting text and information from PDF files with authentication and rate limiting.
+
+## Features
+
+- Extract text from PDF files
+- Get detailed PDF information (metadata, pages, etc.)
+- Extract page-wise information with text and metadata
+- API key authentication
+- Rate limiting protection
+- Graceful handling of PDFs with images
+- Error handling and validation
+
+## Installation
+
+```bash
+npm install
+```
+
+## Environment Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+# Server Configuration
+PORT=3000
+
+# API Authentication
+API_KEYS=your-api-key-1,your-api-key-2,your-api-key-3
+JWT_SECRET=your-super-secret-jwt-key
+
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=10
+RATE_LIMIT_PER_HOUR=100
+
+# File Upload Limits
+MAX_FILE_SIZE_MB=50
+```
+
+## Running the Application
+
+```bash
+# Development
+npm run start:dev
+
+# Production
+npm run start:prod
+```
+
+## API Endpoints
+
+All endpoints require authentication via API key in the `x-api-key` header.
+
+### Extract PDF Text
+```bash
+curl -X POST https://your-domain.com/extract-pdf-text \
+  -H "x-api-key: your-api-key" \
+  -F "pdf=@document.pdf"
+```
+
+### Extract PDF Information
+```bash
+curl -X POST https://your-domain.com/extract-pdf-info \
+  -H "x-api-key: your-api-key" \
+  -F "pdf=@document.pdf"
+```
+
+### Extract PDF Pages
+```bash
+curl -X POST https://your-domain.com/extract-pdf-pages \
+  -H "x-api-key: your-api-key" \
+  -F "pdf=@document.pdf"
+```
+
+## Authentication
+
+The API uses API key authentication. Include your API key in the request header:
+
+```
+x-api-key: your-api-key
+```
+
+You can configure multiple API keys by separating them with commas in the `API_KEYS` environment variable.
+
+## Rate Limiting
+
+- **Per minute**: 10 requests (configurable via `RATE_LIMIT_PER_MINUTE`)
+- **Per hour**: 100 requests (configurable via `RATE_LIMIT_PER_HOUR`)
+
+## Response Format
+
+All endpoints return JSON responses with the following structure:
+
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": {
+    // Response data specific to each endpoint
+  }
+}
+```
+
+## Error Handling
+
+The API provides detailed error messages for:
+- Missing or invalid API keys
+- Invalid file uploads
+- PDF processing errors
+- Rate limit exceeded
+- File size limits
+
+## Deployment
+
+The service is configured for Railway deployment with:
+- Environment-based configuration
+- Health checks
+- Automatic HTTPS handling
+
+## Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.

@@ -5,12 +5,14 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from './app.service';
 import { PdfService } from './pdf.service';
 import { UploadedPdfFile } from './types/upload.types';
+import { ApiKeyGuard } from './auth/api-key.guard';
 
 @Controller()
 export class AppController {
@@ -24,6 +26,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  @UseGuards(ApiKeyGuard)
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('extract-pdf-text')
   @UseInterceptors(FileInterceptor('pdf'))
@@ -62,6 +65,7 @@ export class AppController {
     }
   }
 
+  @UseGuards(ApiKeyGuard)
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('extract-pdf-info')
   @UseInterceptors(FileInterceptor('pdf'))
@@ -98,6 +102,7 @@ export class AppController {
     }
   }
 
+  @UseGuards(ApiKeyGuard)
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('extract-pdf-pages')
   @UseInterceptors(FileInterceptor('pdf'))
