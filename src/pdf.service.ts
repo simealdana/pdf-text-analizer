@@ -6,10 +6,25 @@ import pdfParse from 'pdf-parse';
 export class PdfService {
   constructor() {}
 
+  private cleanText(text: string): string {
+    return text
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/[^\w\s\n.,!?;:()[\]{}"'\-–—…]/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .join('\n')
+      .trim();
+  }
+
   async extractTextFromPdf(fileBuffer: Buffer): Promise<string> {
     try {
       const data = await pdfParse(fileBuffer);
-      return data.text || '';
+      const rawText = data.text || '';
+      return this.cleanText(rawText);
     } catch (error) {
       console.warn(
         'PDF extraction warning:',
@@ -22,14 +37,20 @@ export class PdfService {
   async extractDetailedInfo(fileBuffer: Buffer): Promise<any> {
     try {
       const data = await pdfParse(fileBuffer);
+      const rawText = data.text || '';
+      const cleanText = this.cleanText(rawText);
 
       return {
         numpages: data.numpages || 0,
         numrender: data.numrender || 0,
         info: data.info || null,
         metadata: data.metadata || null,
-        text: data.text || '',
+        text: cleanText,
         version: data.version || null,
+        characterCount: cleanText.length,
+        wordCount: cleanText.split(/\s+/).filter((word) => word.length > 0)
+          .length,
+        lineCount: cleanText.split('\n').length,
       };
     } catch (error) {
       console.warn(
@@ -43,6 +64,9 @@ export class PdfService {
         metadata: null,
         text: '',
         version: null,
+        characterCount: 0,
+        wordCount: 0,
+        lineCount: 0,
         warning:
           'PDF may contain only images or be corrupted. No text could be extracted.',
       };
@@ -72,9 +96,10 @@ export class PdfService {
         nextPage: number | null;
       }> = [];
 
-      const fullText = data.text || '';
+      const rawText = data.text || '';
+      const cleanText = this.cleanText(rawText);
       const textPerPage = this.splitTextByPagesIntelligently(
-        fullText,
+        cleanText,
         totalPages,
       );
 
@@ -94,6 +119,7 @@ export class PdfService {
             characterCount: pageText.length,
             wordCount: pageText.split(/\s+/).filter((word) => word.length > 0)
               .length,
+            lineCount: pageText.split('\n').length,
           },
           nextPage: pageNum < totalPages ? pageNum + 1 : null,
         });
