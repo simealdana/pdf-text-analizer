@@ -11,12 +11,11 @@ export class PdfService {
       const data = await pdfParse(fileBuffer);
       return data.text || '';
     } catch (error) {
-      console.log('error', error);
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new BadRequestException(
-        `Failed to extract text from PDF: ${errorMessage}`,
+      console.warn(
+        'PDF extraction warning:',
+        error instanceof Error ? error.message : 'Unknown error',
       );
+      return '';
     }
   }
 
@@ -33,11 +32,20 @@ export class PdfService {
         version: data.version || null,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new BadRequestException(
-        `Failed to extract detailed info from PDF: ${errorMessage}`,
+      console.warn(
+        'PDF extraction warning:',
+        error instanceof Error ? error.message : 'Unknown error',
       );
+      return {
+        numpages: 0,
+        numrender: 0,
+        info: null,
+        metadata: null,
+        text: '',
+        version: null,
+        warning:
+          'PDF may contain only images or be corrupted. No text could be extracted.',
+      };
     }
   }
 
@@ -64,7 +72,6 @@ export class PdfService {
         nextPage: number | null;
       }> = [];
 
-      // Extract full text and split it intelligently by pages
       const fullText = data.text || '';
       const textPerPage = this.splitTextByPagesIntelligently(
         fullText,
@@ -72,9 +79,11 @@ export class PdfService {
       );
 
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        const pageText = textPerPage[pageNum - 1] || '';
+
         pages.push({
           page: pageNum,
-          text: textPerPage[pageNum - 1] || '',
+          text: pageText,
           metadata: {
             pageInfo: data.info || null,
             pageMetadata: data.metadata || null,
@@ -82,10 +91,9 @@ export class PdfService {
             version: data.version || null,
             totalPages: totalPages,
             pageNumber: pageNum,
-            characterCount: (textPerPage[pageNum - 1] || '').length,
-            wordCount: (textPerPage[pageNum - 1] || '')
-              .split(/\s+/)
-              .filter((word) => word.length > 0).length,
+            characterCount: pageText.length,
+            wordCount: pageText.split(/\s+/).filter((word) => word.length > 0)
+              .length,
           },
           nextPage: pageNum < totalPages ? pageNum + 1 : null,
         });
@@ -93,11 +101,11 @@ export class PdfService {
 
       return pages;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new BadRequestException(
-        `Failed to extract pages info from PDF: ${errorMessage}`,
+      console.warn(
+        'PDF extraction warning:',
+        error instanceof Error ? error.message : 'Unknown error',
       );
+      return [];
     }
   }
 
@@ -105,17 +113,13 @@ export class PdfService {
     text: string,
     totalPages: number,
   ): string[] {
-    // Remove extra whitespace and normalize line breaks
     const normalizedText = text
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
-    // Split by paragraphs (double line breaks)
     const paragraphs = normalizedText.split(/\n\n+/);
-
-    // Calculate approximate paragraphs per page
     const paragraphsPerPage = Math.ceil(paragraphs.length / totalPages);
 
     const pages: string[] = [];
@@ -126,7 +130,6 @@ export class PdfService {
       currentPage += paragraph + '\n\n';
       paragraphCount++;
 
-      // Check if we should move to next page
       if (
         paragraphCount >= paragraphsPerPage &&
         pages.length < totalPages - 1
@@ -137,38 +140,17 @@ export class PdfService {
       }
     }
 
-    // Add the last page with remaining content
     if (currentPage.trim() || pages.length === 0) {
       pages.push(currentPage.trim());
     }
 
-    // Ensure we have exactly totalPages elements
     while (pages.length < totalPages) {
       pages.push('');
     }
 
-    // If we have more pages than expected, merge the last ones
     if (pages.length > totalPages) {
       const lastPage = pages.slice(totalPages - 1).join('\n\n');
       pages.splice(totalPages - 1, pages.length - totalPages + 1, lastPage);
-    }
-
-    return pages;
-  }
-
-  private splitTextByPages(text: string, totalPages: number): string[] {
-    // Simple approach: split text evenly by pages
-    // This is a basic implementation - in a real scenario, you might want
-    // to use a more sophisticated PDF parsing library that supports per-page extraction
-    const words = text.split(/\s+/);
-    const wordsPerPage = Math.ceil(words.length / totalPages);
-    const pages: string[] = [];
-
-    for (let i = 0; i < totalPages; i++) {
-      const startIndex = i * wordsPerPage;
-      const endIndex = Math.min(startIndex + wordsPerPage, words.length);
-      const pageWords = words.slice(startIndex, endIndex);
-      pages.push(pageWords.join(' '));
     }
 
     return pages;
