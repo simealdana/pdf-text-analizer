@@ -6,6 +6,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from './app.service';
 import { PdfService } from './pdf.service';
@@ -23,6 +24,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('extract-pdf-text')
   @UseInterceptors(FileInterceptor('pdf'))
   async extractPdfText(@UploadedFile() file: UploadedPdfFile | undefined) {
@@ -60,6 +62,7 @@ export class AppController {
     }
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('extract-pdf-info')
   @UseInterceptors(FileInterceptor('pdf'))
   async extractPdfInfo(@UploadedFile() file: UploadedPdfFile | undefined) {
@@ -71,7 +74,7 @@ export class AppController {
       this.pdfService.validatePdfFile(file);
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const detailedInfo = await this.pdfService.extractDetailedInfo(
+      const detailedInfo: any = await this.pdfService.extractDetailedInfo(
         file.buffer,
       );
 
@@ -95,6 +98,7 @@ export class AppController {
     }
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('extract-pdf-pages')
   @UseInterceptors(FileInterceptor('pdf'))
   async extractPdfPages(@UploadedFile() file: UploadedPdfFile | undefined) {
