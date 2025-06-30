@@ -4,7 +4,6 @@ import { MetadataService } from '../services/metadata.service';
 
 describe('MetadataService', () => {
   let service: MetadataService;
-  let configService: ConfigService;
 
   const mockConfigService = {
     get: jest.fn(),
@@ -22,7 +21,6 @@ describe('MetadataService', () => {
     }).compile();
 
     service = module.get<MetadataService>(MetadataService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -37,16 +35,20 @@ describe('MetadataService', () => {
     it('should return null when OpenAI API key is not configured', async () => {
       mockConfigService.get.mockReturnValue(null);
 
-      const result = await service.generateMetadata('Sample text content');
+      const result = (await service.generateMetadata(
+        'Sample text content',
+      )) as unknown;
 
       expect(result).toBeNull();
-      expect(configService.get).toHaveBeenCalledWith('openai.apiKey');
+      expect(mockConfigService.get).toHaveBeenCalledWith('openai.apiKey');
     });
 
     it('should return null when OpenAI API key is empty string', async () => {
       mockConfigService.get.mockReturnValue('');
 
-      const result = await service.generateMetadata('Sample text content');
+      const result = (await service.generateMetadata(
+        'Sample text content',
+      )) as unknown;
 
       expect(result).toBeNull();
     });
@@ -92,7 +94,7 @@ describe('MetadataService', () => {
       // Mock the getOpenAI method
       jest.spyOn(service as any, 'getOpenAI').mockReturnValue(mockOpenAI);
 
-      const result = await service.generateMetadata(mockText);
+      const result = (await service.generateMetadata(mockText)) as unknown;
 
       expect(result).toEqual({
         description:
@@ -110,6 +112,7 @@ describe('MetadataService', () => {
           },
           {
             role: 'user',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment
             content: expect.stringContaining(mockText),
           },
         ],
@@ -132,7 +135,7 @@ describe('MetadataService', () => {
 
       jest.spyOn(service as any, 'getOpenAI').mockReturnValue(mockOpenAI);
 
-      const result = await service.generateMetadata('Sample text');
+      const result = (await service.generateMetadata('Sample text')) as unknown;
 
       expect(result).toBeNull();
     });
@@ -161,7 +164,7 @@ describe('MetadataService', () => {
 
       jest.spyOn(service as any, 'getOpenAI').mockReturnValue(mockOpenAI);
 
-      const result = await service.generateMetadata('Sample text');
+      const result = (await service.generateMetadata('Sample text')) as unknown;
 
       expect(result).toBeNull();
     });
@@ -190,7 +193,7 @@ describe('MetadataService', () => {
 
       jest.spyOn(service as any, 'getOpenAI').mockReturnValue(mockOpenAI);
 
-      const result = await service.generateMetadata('Sample text');
+      const result = (await service.generateMetadata('Sample text')) as unknown;
 
       expect(result).toBeNull();
     });
@@ -222,7 +225,7 @@ describe('MetadataService', () => {
 
       jest.spyOn(service as any, 'getOpenAI').mockReturnValue(mockOpenAI);
 
-      const result = await service.generateMetadata('Sample text');
+      const result = (await service.generateMetadata('Sample text')) as unknown;
 
       expect(result).toEqual({
         description: 'Sample description',
@@ -259,7 +262,7 @@ describe('MetadataService', () => {
 
       jest.spyOn(service as any, 'getOpenAI').mockReturnValue(mockOpenAI);
 
-      const result = await service.generateMetadata('Sample text');
+      const result = (await service.generateMetadata('Sample text')) as unknown;
 
       expect(result).toBeNull();
     });
