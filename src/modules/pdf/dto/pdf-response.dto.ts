@@ -1,4 +1,4 @@
-export class PdfTextResponseDto {
+export interface PdfTextResponseDto {
   success: boolean;
   message: string;
   data: {
@@ -10,7 +10,18 @@ export class PdfTextResponseDto {
   };
 }
 
-export class PdfInfoResponseDto {
+export interface PdfDetailedInfoDto {
+  numpages: number;
+  numrender: number;
+  info: any;
+  metadata: any;
+  text: string;
+  version: string | null;
+  generatedMetadata: any;
+  warning?: string;
+}
+
+export interface PdfInfoResponseDto {
   success: boolean;
   message: string;
   data: {
@@ -21,33 +32,38 @@ export class PdfInfoResponseDto {
     info: any;
     metadata: any;
     text: string;
-    version: string;
+    version: string | null;
+    generatedMetadata: any;
+    warning?: string;
   };
 }
 
-export class PdfPageInfoDto {
+export interface PdfPageMetadataDto {
+  pageInfo: any;
+  pageMetadata: any;
+  numrender: number | null;
+  version: string | null;
+  totalPages: number;
+  pageNumber: number;
+  characterCount: number;
+  wordCount: number;
+  generatedMetadata: any;
+}
+
+export interface PdfPageDto {
   page: number;
   text: string;
-  metadata: {
-    pageInfo: any;
-    pageMetadata: any;
-    numrender: number;
-    version: string;
-    totalPages: number;
-    pageNumber: number;
-    characterCount: number;
-    wordCount: number;
-  };
+  metadata: PdfPageMetadataDto;
   nextPage: number | null;
 }
 
-export class PdfPagesResponseDto {
+export interface PdfPagesResponseDto {
   success: boolean;
   message: string;
   data: {
     filename: string;
     size: number;
     totalPages: number;
-    pages: PdfPageInfoDto[];
+    pages: PdfPageDto[];
   };
 }

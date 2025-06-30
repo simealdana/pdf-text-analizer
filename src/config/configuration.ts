@@ -4,6 +4,9 @@ export default () => ({
     keys: process.env.API_KEYS?.split(',') || ['default-key'],
     jwtSecret: process.env.JWT_SECRET || 'fallback-secret',
   },
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY,
+  },
   rateLimit: {
     perMinute: parseInt(process.env.RATE_LIMIT_PER_MINUTE, 10) || 10,
     perHour: parseInt(process.env.RATE_LIMIT_PER_HOUR, 10) || 100,
