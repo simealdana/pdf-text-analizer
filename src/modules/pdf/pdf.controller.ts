@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { PdfService } from './pdf.service';
+import { PdfService } from './services/pdf.service';
 import { UploadedPdfFile } from '../../shared/types/upload.types';
 import { ApiKeyGuard } from '../../shared/guards/api-key.guard';
 import {

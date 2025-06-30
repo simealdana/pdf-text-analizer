@@ -1,25 +1,32 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import { getMetadataPrompt } from './prompts/metadata.prompt';
-import { PdfMetadata } from './types/metadata.types';
+import { getMetadataPrompt } from '../prompts/metadata.prompt';
+import { PdfMetadata } from '../types/metadata.types';
 
 @Injectable()
 export class MetadataService {
   private readonly logger = new Logger(MetadataService.name);
-  private openai: OpenAI;
+  private openai: OpenAI | null = null;
 
-  constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.get<string>('openai.apiKey');
-    this.openai = new OpenAI({
-      apiKey,
-    });
+  constructor(private readonly configService: ConfigService) {}
+
+  private getOpenAI(): OpenAI | null {
+    if (!this.openai) {
+      const apiKey = this.configService.get<string>('openai.apiKey');
+      if (apiKey) {
+        this.openai = new OpenAI({
+          apiKey,
+        });
+      }
+    }
+    return this.openai;
   }
 
   async generateMetadata(text: string): Promise<PdfMetadata | null> {
-    const apiKey = this.configService.get<string>('openai.apiKey');
+    const openai = this.getOpenAI();
 
-    if (!apiKey) {
+    if (!openai) {
       this.logger.warn('OpenAI API key not configured');
       return null;
     }
@@ -27,7 +34,7 @@ export class MetadataService {
     try {
       const prompt = getMetadataPrompt(text);
 
-      const completion = await this.openai.chat.completions.create({
+      const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {

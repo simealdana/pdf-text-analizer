@@ -1,24 +1,24 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UploadedPdfFile } from '../../shared/types/upload.types';
+import { UploadedPdfFile } from '../../../shared/types/upload.types';
 import pdfParse from 'pdf-parse';
 import {
   cleanText,
   splitTextByPages,
-} from '../../shared/utils/text-cleaner.util';
+} from '../../../shared/utils/text-cleaner.util';
 import { MetadataService } from './metadata.service';
-import { PdfMetadata } from './types/metadata.types';
+import { PdfMetadata } from '../types/metadata.types';
 import {
   ExtractInfoMetadataDto,
   ExtractPagesMetadataDto,
-} from './dto/metadata-flags.dto';
+} from '../dto/metadata-flags.dto';
 import {
   PdfTextResponseDto,
   PdfInfoResponseDto,
   PdfPagesResponseDto,
   PdfPageDto,
   PdfDetailedInfoDto,
-} from './dto/pdf-response.dto';
+} from '../dto/pdf-response.dto';
 
 @Injectable()
 export class PdfService {
@@ -54,8 +54,8 @@ export class PdfService {
   ): Promise<PdfInfoResponseDto> {
     this.validatePdfFile(file);
 
-    const includeMetadata = metadataFlags.includeMetadata === true;
-    const textLimit = metadataFlags.textLimit || 4000;
+    const includeMetadata = Boolean(metadataFlags.includeMetadata);
+    const textLimit = metadataFlags.textLimit ?? 4000;
 
     const detailedInfo: PdfDetailedInfoDto =
       await this.extractDetailedInfoFromBuffer(
@@ -81,8 +81,8 @@ export class PdfService {
   ): Promise<PdfPagesResponseDto> {
     this.validatePdfFile(file);
 
-    const includeMetadata = metadataFlags.includeMetadata === true;
-    const textLimit = metadataFlags.textLimit || 2000;
+    const includeMetadata = Boolean(metadataFlags.includeMetadata);
+    const textLimit = metadataFlags.textLimit ?? 2000;
 
     const pagesInfo = await this.extractPagesInfoFromBuffer(
       file.buffer,
@@ -128,8 +128,24 @@ export class PdfService {
 
       if (includeMetadata) {
         const truncatedText = this.truncateText(cleanTextData, textLimit);
-        generatedMetadata =
-          await this.metadataService.generateMetadata(truncatedText);
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const meta =
+            await this.metadataService.generateMetadata(truncatedText);
+          if (
+            meta &&
+            typeof meta === 'object' &&
+            'description' in meta &&
+            'keywords' in meta
+          ) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            generatedMetadata = meta;
+          } else {
+            generatedMetadata = null;
+          }
+        } catch {
+          generatedMetadata = null;
+        }
       }
 
       return {
@@ -185,8 +201,15 @@ export class PdfService {
 
         if (includeMetadata) {
           const truncatedPageText = this.truncateText(pageText, textLimit);
-          pageMetadata =
-            await this.metadataService.generateMetadata(truncatedPageText);
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const meta =
+              await this.metadataService.generateMetadata(truncatedPageText);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            pageMetadata = meta as PdfMetadata | null;
+          } catch {
+            pageMetadata = null;
+          }
         }
 
         pages.push({

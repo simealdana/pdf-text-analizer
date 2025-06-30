@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PdfController } from './pdf.controller';
-import { PdfService } from './pdf.service';
-import { MetadataService } from './metadata.service';
+import { PdfService } from './services/pdf.service';
+import { MetadataService } from './services/metadata.service';
 
 @Module({
   controllers: [PdfController],
