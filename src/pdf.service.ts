@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { UploadedPdfFile } from './types/upload.types';
 import pdfParse from 'pdf-parse';
+import { cleanText, splitTextByPages } from './utils/text-cleaner.util';
 
 @Injectable()
 export class PdfService {
@@ -9,7 +10,7 @@ export class PdfService {
   async extractTextFromPdf(fileBuffer: Buffer): Promise<string> {
     try {
       const data = await pdfParse(fileBuffer);
-      return data.text || '';
+      return cleanText(data.text || '');
     } catch (error) {
       console.warn(
         'PDF extraction warning:',
@@ -28,7 +29,7 @@ export class PdfService {
         numrender: data.numrender || 0,
         info: data.info || null,
         metadata: data.metadata || null,
-        text: data.text || '',
+        text: cleanText(data.text || ''),
         version: data.version || null,
       };
     } catch (error) {
@@ -65,6 +66,9 @@ export class PdfService {
         return [];
       }
 
+      const fullText = cleanText(data.text || '');
+      const textPerPage = splitTextByPages(fullText, totalPages);
+
       const pages: Array<{
         page: number;
         text: string;
@@ -72,14 +76,8 @@ export class PdfService {
         nextPage: number | null;
       }> = [];
 
-      const fullText = data.text || '';
-      const textPerPage = this.splitTextByPagesIntelligently(
-        fullText,
-        totalPages,
-      );
-
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        const pageText = textPerPage[pageNum - 1] || '';
+        const pageText = cleanText(textPerPage[pageNum - 1] || '');
 
         pages.push({
           page: pageNum,
@@ -107,53 +105,6 @@ export class PdfService {
       );
       return [];
     }
-  }
-
-  private splitTextByPagesIntelligently(
-    text: string,
-    totalPages: number,
-  ): string[] {
-    const normalizedText = text
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-
-    const paragraphs = normalizedText.split(/\n\n+/);
-    const paragraphsPerPage = Math.ceil(paragraphs.length / totalPages);
-
-    const pages: string[] = [];
-    let currentPage = '';
-    let paragraphCount = 0;
-
-    for (const paragraph of paragraphs) {
-      currentPage += paragraph + '\n\n';
-      paragraphCount++;
-
-      if (
-        paragraphCount >= paragraphsPerPage &&
-        pages.length < totalPages - 1
-      ) {
-        pages.push(currentPage.trim());
-        currentPage = '';
-        paragraphCount = 0;
-      }
-    }
-
-    if (currentPage.trim() || pages.length === 0) {
-      pages.push(currentPage.trim());
-    }
-
-    while (pages.length < totalPages) {
-      pages.push('');
-    }
-
-    if (pages.length > totalPages) {
-      const lastPage = pages.slice(totalPages - 1).join('\n\n');
-      pages.splice(totalPages - 1, pages.length - totalPages + 1, lastPage);
-    }
-
-    return pages;
   }
 
   validatePdfFile(file: UploadedPdfFile): void {
