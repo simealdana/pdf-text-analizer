@@ -1,7 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { UploadedPdfFile } from './types/upload.types';
+import { UploadedPdfFile } from '../../shared/types/upload.types';
 import pdfParse from 'pdf-parse';
-import { cleanText, splitTextByPages } from './utils/text-cleaner.util';
+import {
+  cleanText,
+  splitTextByPages,
+} from '../../shared/utils/text-cleaner.util';
 
 @Injectable()
 export class PdfService {

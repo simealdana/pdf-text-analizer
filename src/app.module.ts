@@ -3,8 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PdfService } from './pdf.service';
-import { ApiKeyGuard } from './auth/api-key.guard';
+import { PdfModule } from './modules/pdf/pdf.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -31,8 +32,11 @@ import configuration from './config/configuration';
       ],
       inject: [ConfigService],
     }),
+    AuthModule,
+    HealthModule,
+    PdfModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PdfService, ApiKeyGuard],
+  providers: [AppService],
 })
 export class AppModule {}
